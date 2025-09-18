@@ -1,0 +1,9 @@
+<library path="robotiq_rviz_plugin">
+  <class name="robotiq_rviz_plugin/RobotiqPanel" 
+         type="robotiq_rviz_plugin::RobotiqPanel" 
+         base_class_type="rviz_common::Panel">
+    <description>
+      Panel for controlling Robotiq 2F-85 gripper
+    </description>
+  </class>
+</library>

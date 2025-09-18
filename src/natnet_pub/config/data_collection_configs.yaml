@@ -1,0 +1,12 @@
+natnet_client_pub_node:
+  ros__parameters:
+    rate: 200.0
+    base_frame: base_link
+    end_effector_frame: end_effector_link
+    calibrate: True
+    t_calib: [0.240664, -0.602599, -0.020892]  # Calibration offset [0.220615, -0.545225, -0.026517]
+    q_calib: [0.503985, 0.489491, 0.500855, 0.505512]  # Quaternion calibration offset 
+    robot_base_rb_id: 1
+    robot_ee_rb_id: 2
+    fixed_ee_rb_id: 3
+    natnet_world_frame: natnet_world

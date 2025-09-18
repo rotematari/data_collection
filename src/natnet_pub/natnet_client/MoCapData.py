@@ -31,7 +31,7 @@
 import copy
 import hashlib
 import random
-
+from typing import Optional
 K_SKIP = [0, 0, 1]
 K_FAIL = [0, 1, 0]
 K_PASS = [1, 0, 0]
@@ -188,7 +188,8 @@ class MarkerData:
              [x=%3.2f,y=%3.2f,z=%3.2f]\n""" % (out_tab_str2, i,
                                                pos[0], pos[1], pos[2])
         return out_str
-
+    def get_marker_pos_list(self) -> list[list[float]]:
+        return self.marker_pos_list
 
 class MarkerSetData:
     def __init__(self):
@@ -227,7 +228,10 @@ class MarkerSetData:
             out_tab_str, unlabeled_markers_count)
         out_str += self.unlabeled_markers.get_as_string(tab_str, level+1)
         return out_str
-
+    def get_marker_data_list(self) -> list[MarkerData]:
+        return self.marker_data_list
+    def get_unlabeled_marker_data(self) -> MarkerData:
+        return self.unlabeled_markers
 
 class LegacyMarkerData:
     def __init__(self):
@@ -259,7 +263,7 @@ class RigidBodyMarker:
         self.pos = [0.0, 0.0, 0.0]
         self.id_num = 0
         self.size = 0
-        self.error = 0
+        self.error = 0.0
         self.marker_num = -1
 
     def get_as_string(self, tab_str="  ", level=0):
@@ -330,7 +334,8 @@ class RigidBody:
         out_str += "%sTracking Valid: %s\n" % (out_tab_str, tf_string)
 
         return out_str
-
+    def get_rigid_body_marker_list(self)-> list[RigidBodyMarker]:
+        return self.rb_marker_list
 
 class RigidBodyData:
     def __init__(self):
@@ -355,7 +360,8 @@ class RigidBodyData:
             out_str += rigid_body.get_as_string(tab_str, level+1)
             rb_num += 1
         return out_str
-
+    def get_rigid_body_list(self)-> list[RigidBody]:
+        return self.rigid_body_list
 
 class Skeleton:
     def __init__(self, new_id=0):
@@ -592,9 +598,9 @@ class LabeledMarker:
 
 class LabeledMarkerData:
     def __init__(self):
-        self.labeled_marker_list = []
+        self.labeled_marker_list: list[LabeledMarker] = []
 
-    def add_labeled_marker(self, labeled_marker):
+    def add_labeled_marker(self, labeled_marker: LabeledMarker):
         self.labeled_marker_list.append(copy.deepcopy(labeled_marker))
         return len(self.labeled_marker_list)
 
@@ -613,7 +619,8 @@ class LabeledMarkerData:
             labeled_marker.marker_num = i
             out_str += labeled_marker.get_as_string(tab_str, level+2)
         return out_str
-
+    def get_labeled_marker_list(self) -> list[LabeledMarker]:
+        return self.labeled_marker_list
 
 class ForcePlateChannelData:
     def __init__(self):
@@ -770,14 +777,14 @@ class DeviceData:
 
 class FrameSuffixData:
     def __init__(self):
-        self.timecode = -1
-        self.timecode_sub = -1
-        self.timestamp = -1
-        self.stamp_camera_mid_exposure = -1
-        self.stamp_data_received = -1
-        self.stamp_transmit = -1
-        self.prec_timestamp_secs = -1
-        self.prec_timestamp_frac_secs = -1
+        self.timecode = -1.0
+        self.timecode_sub = -1.0
+        self.timestamp = -1.0
+        self.stamp_camera_mid_exposure = -1.0
+        self.stamp_data_received = -1.0
+        self.stamp_transmit = -1.0
+        self.prec_timestamp_secs = -1.0
+        self.prec_timestamp_frac_secs = -1.0
         self.param = 0
         self.is_recording = False
         self.tracked_models_changed = True
@@ -921,6 +928,21 @@ class MoCapData:
 
         return out_str
 
+    def get_rigid_body_data(self) -> Optional[RigidBodyData]:
+        if self.rigid_body_data is not None:
+            return self.rigid_body_data
+        else:
+            return None
+    def get_marker_set_data(self) -> Optional[MarkerSetData]:
+        if self.marker_set_data is not None:
+            return self.marker_set_data
+        else:
+            return None
+    def get_labeled_marker_data(self) -> Optional[LabeledMarkerData]:
+        if self.labeled_marker_data is not None:
+            return self.labeled_marker_data
+        else:
+            return None
 # test program
 
 

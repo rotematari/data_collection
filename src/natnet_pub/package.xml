@@ -7,10 +7,26 @@
   <maintainer email="rotem.atri@gmail.com">rotem</maintainer>
   <license>TODO: License declaration</license>
 
+  <build_depend>geometry_msgs</build_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <!-- Visualization messages -->
+  <build_depend>visualization_msgs</build_depend>
+  <exec_depend>visualization_msgs</exec_depend>
+  <build_depend>std_msgs</build_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <build_depend>my_msgs</build_depend>
+  <exec_depend>my_msgs</exec_depend>
+  <build_depend>tf2_ros</build_depend>
+  <exec_depend>tf2_ros</exec_depend>
+
+  
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
   <test_depend>python3-pytest</test_depend>
+
 
   <export>
     <build_type>ament_python</build_type>
