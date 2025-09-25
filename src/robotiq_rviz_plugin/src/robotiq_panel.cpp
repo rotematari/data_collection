@@ -58,11 +58,13 @@ void RobotiqPanel::setupUI()
   reset_btn_ = new QPushButton("Reset");
   open_btn_ = new QPushButton("Open");
   close_btn_ = new QPushButton("Close");
+  setup_btn_ = new QPushButton("Setup");
   
   control_layout->addWidget(activate_btn_, 0, 0);
   control_layout->addWidget(reset_btn_, 0, 1);
   control_layout->addWidget(open_btn_, 1, 0);
   control_layout->addWidget(close_btn_, 1, 1);
+  control_layout->addWidget(setup_btn_, 2, 0, 1, 2);
   
   control_group->setLayout(control_layout);
   
@@ -122,6 +124,7 @@ void RobotiqPanel::setupUI()
   connect(open_btn_, &QPushButton::clicked, this, &RobotiqPanel::onOpenClicked);
   connect(close_btn_, &QPushButton::clicked, this, &RobotiqPanel::onCloseClicked);
   connect(goto_btn_, &QPushButton::clicked, this, &RobotiqPanel::onGotoClicked);
+  connect(setup_btn_, &QPushButton::clicked, this, &RobotiqPanel::onSetupClicked);
   connect(position_slider_, QOverload<int>::of(&QSlider::valueChanged), this, &RobotiqPanel::onPositionChanged);
   // connect(this, &RobotiqPanel::statusReceived, this, &RobotiqPanel::updateStatusLabels);
 }
@@ -178,6 +181,27 @@ void RobotiqPanel::onPositionChanged(int value)
 {
   // Optional: real-time position feedback
   Q_UNUSED(value)
+}
+void RobotiqPanel::onSetupClicked()
+{
+  // open gripper
+  if (command_pub_) {
+    auto msg = robotiq_msgs::msg::RobotiqGripperCommand();
+    msg.command = "open";
+    command_pub_->publish(msg);
+  }
+
+  // wait for a second
+  std::this_thread::sleep_for(std::chrono::seconds(5));
+  // log the sleep time
+  RCLCPP_INFO(node_->get_logger(), "Waited for 5 seconds");
+
+  // close gripper
+  if (command_pub_) {
+    auto msg = robotiq_msgs::msg::RobotiqGripperCommand();
+    msg.command = "close";
+    command_pub_->publish(msg);
+  }
 }
 
 // void RobotiqPanel::updateStatusLabels(const QString & status_text, int position, int current)

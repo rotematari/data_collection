@@ -3,58 +3,25 @@ import cv2
 from pprint import pprint
 import os
 import numpy as np
-# class DigitArray:
-#     def __init__(self, show_log=False):
-#         self.digits_info = DigitHandler.list_digits()
-#         self.show_log = show_log
-#         if show_log:
-#             pprint(self.digits_info)
-#         self.digits = []
-#         self._connect_all()
 
-#     def _connect_one(self, info):
-#         try:
-#             if self.show_log:
-#                 pprint(
-#                     f"Connecting to {info['serial']} with device name {info['dev_name']}..."
-#                 )
-#             digit = Digit(info["serial"], name=info["dev_name"])
-#             digit.connect()
-#             self.digits.append(digit)
-#             if self.show_log:
-#                 print(f"Connected to {info['serial']}")
-#         except Exception as e:
-#             if self.show_log:
-#                 print(f"Failed to connect to {info['serial']}: {e}")
-    
-#     def _connect_all(self):
-#         len_before = len(self.digits_info)
-#         if self.show_log:
-#             print(f"Found {len_before} DIGIT devices.")
-#         for info in self.digits_info:
-#             try:
-#                 if self.show_log:
-#                     pprint(
-#                         f"Connecting to {info['serial']} with device name {info['dev_name']}..."
-#                     )
-#                 digit = Digit(info["serial"], name=info["dev_name"])
-#                 digit.connect()
-#                 self.digits.append(digit)
-#                 if self.show_log:
-#                     print(f"Connected to {info['serial']}")
-#             except Exception as e:
-#                 if self.show_log:
-#                     print(f"Failed to connect to {info['serial']}: {e}")
-
-#         print("Successfully connected to")
-#         pprint(self.digits)
 
 class DigitArray:
-    def __init__(self, show_log=False):
+    def __init__(self,
+                resolution="QVGA",
+                fps=30,
+                intensity=15,
+                show_log=False,
+                ros_logger=None):
         self.digits_info = DigitHandler.list_digits()
         self.show_log = show_log
+        self.ros_logger = ros_logger
+        self.resolution = resolution
+        self.fps = fps
+        self.intensity = intensity
         if show_log:
             pprint(self.digits_info)
+            if ros_logger:
+                ros_logger.info("Digit information: " + str(self.digits_info))
         self.digits = []
         self.ref_frames = {}  # Store reference frames for each digit
         self._connect_all()
@@ -68,11 +35,18 @@ class DigitArray:
         
         # Capture frames
         for i in range(num_frames):
-            frame = digit.get_frame()
+            try:
+                frame = digit.get_frame()
+            except Exception as e:
+                print(f"Error capturing frame from {digit.serial}: {e}")
+                
+            if frame is None:
+                print(f"Received empty frame from {digit.serial}")
+                continue
             frames.append(frame.astype(np.float32))
             
             if self.show_log and (i + 1) % 10 == 0:
-                print(f"  Captured {i + 1}/{num_frames} frames for {digit.serial}")
+                print(f"  Captured {i + 1}/{num_frames} frames for {digit.dev_name}")
         
         # Calculate mean frame
         # mean_frame = np.mean(frames, axis=0).astype(np.uint8)
@@ -95,6 +69,13 @@ class DigitArray:
                 )
             digit = Digit(info["serial"], name=info["dev_name"])
             digit.connect()
+            # try to get a frame to verify connection
+            try:
+                _ = digit.get_frame()
+            except Exception as e:
+                if self.show_log:
+                    print(f"Failed to get frame from {info['serial']}: {e}")
+                return
             self.digits.append(digit)
             if self.show_log:
                 print(f"Connected to {info['serial']}")
@@ -108,28 +89,46 @@ class DigitArray:
     
     def _connect_all(self):
         len_before = len(self.digits_info)
+        serials = set([d['serial'] for d in self.digits_info])
         if self.show_log:
             print(f"Found {len_before} DIGIT devices.")
-        for info in self.digits_info:
+            print(f"serials : {serials}")
+            
+        # for info in self.digits_info:
+        for serial in serials:
             try:
                 if self.show_log:
                     pprint(
-                        f"Connecting to {info['serial']} with device name {info['dev_name']}..."
+                        f"Connecting to {serial} ..."
                     )
-                digit = Digit(info["serial"], name=info["dev_name"])
+                digit = Digit(
+                    serial=serial, name=f"DIGIT_{serial}"
+                )
                 digit.connect()
-                digit.set_resolution(digit.STREAMS["VGA"])
-                digit.set_fps(digit.STREAMS["VGA"]["fps"]["30fps"])
+                if self.show_log:
+                    print(f"Connected to {serial}, verifying by grabbing a frame...")
+                # try to get a frame to verify connection
+                try:
+                    _ = digit.get_frame()
+                except Exception as e:
+                    print(f"Failed to get frame from {serial}: {e}")
+                    continue
+                print(f"Connected to {serial} successfully.\n\n")
+                
+                # Set to QVGA at 30 fps
+                digit.set_resolution(digit.STREAMS[self.resolution])
+                digit.set_fps(digit.STREAMS[self.resolution]["fps"][f"{self.fps}fps"])
+                digit.set_intensity(self.intensity)
                 self.digits.append(digit)
-                if self.show_log:
-                    print(f"Connected to {info['serial']}")
-                
                 # Capture reference frame immediately after connection
-                self._capture_ref_frame(digit)
-                
+                # self._capture_ref_frame(digit)
+                # connected.add(info["serial"])
+                # if self.show_log:
+                #     print(f"Connected to {info['serial']}")
             except Exception as e:
-                if self.show_log:
-                    print(f"Failed to connect to {info['serial']}: {e}")
+                print(f"Failed to connect to {serial}: {e}")
+                # if self.show_log:
+                    # print(f"connect_all : Failed to connect to {info['dev_name']}: {e}")
 
         print("Successfully connected to")
         pprint(self.digits)
@@ -197,6 +196,12 @@ class DigitArray:
 
 
 if __name__ == "__main__":
-    digit_array = DigitArray()
-    print("\n\nStarting to show all DIGIT views. Press ESC to exit.\n\n")
-    digit_array.show_all_views(diff_with_ref=True)
+    try:
+        digit_array = DigitArray(show_log=True)
+        print("\n\nStarting to show all DIGIT views. Press ESC to exit.\n\n")
+        digit_array.show_all_views(diff_with_ref=False)
+    except Exception as e:
+        print(f"Error: {e}")
+    finally:
+        digit_array.disconnect_all()
+        print("Disconnected from all DIGIT devices.")

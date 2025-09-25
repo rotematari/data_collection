@@ -44,14 +44,8 @@ class NatNetClientPubNode(Node):
             PoseStamped, "natnet/fixed_ee_pose", 10
         )
 
-        self.digit_sub = self.create_subscription(
-            Image,  # Replace with your custom message type if needed
-            "digit_0/image_raw",  # Adjust topic name as needed
-            self.digit_callback,
-            10,
-        )
-        # rate = self.get_parameter('rate').get_parameter_value().double_value
-        # self.timer = self.create_timer(1.0 / rate, self.digit_callback)
+        rate = self.get_parameter('rate').get_parameter_value().double_value
+        self.timer = self.create_timer(1.0 / rate, self.timer_callback)
         self.client_address = self.get_parameter('client_address').get_parameter_value().string_value
         self.server_address = self.get_parameter('server_address').get_parameter_value().string_value
         self.use_multicast = self.get_parameter('use_multicast').get_parameter_value().bool_value
@@ -65,7 +59,8 @@ class NatNetClientPubNode(Node):
         self.robot_ee_rb_id = self.get_parameter('robot_ee_rb_id').get_parameter_value().integer_value
         self.fixed_ee_rb_id = self.get_parameter('fixed_ee_rb_id').get_parameter_value().integer_value
         self.get_logger().info("NatNetClientPubNode started.")
-        # self.get_logger().info(f"Publishing at {rate} Hz")
+        
+        self.get_logger().info(f"Publishing at {rate} Hz")
         self.get_logger().info(f"Base frame: {self.base_frame}")
         self.get_logger().info(f"End effector frame: {self.robot_ee_frame}")
         self.get_logger().info(f"Calibration enabled: {self.calibrate}")
@@ -135,6 +130,10 @@ class NatNetClientPubNode(Node):
         base_link_tf = TransformStamped()
         robot_ee_tf = TransformStamped()
         fixed_ee_tf = TransformStamped()
+        if "rigid_bodies" not in mocap_data:
+            self.get_logger().warn("No rigid bodies in mocap data.")
+            return base_link_tf, robot_ee_tf, fixed_ee_tf
+        
         for rb_id, rb in mocap_data["rigid_bodies"].items():
             # print(f"Received rigid body {rb_id} data:")
             # print(rb)
@@ -302,14 +301,14 @@ class NatNetClientPubNode(Node):
         
         return output_pose
 
-    def digit_callback(self, msg: Image):
+    def timer_callback(self):
         """for the nat net 
         robot_x =  -natnet[0]
         robot_y = natnet[2]
         robot_z = natnet[1]
         """
         self.calib_natnet_world()
-        now_time = msg.header.stamp
+        now_time = self.get_clock().now().to_msg()
         # if (now_time - self.last_time).nanoseconds > 1e6:  # Avoid too frequent calls
         # self.get_logger().info(f"Digit callback called at {now_time.seconds_nanoseconds()[0]}.{now_time.seconds_nanoseconds()[1]}")
         self.last_time = now_time
@@ -327,22 +326,22 @@ class NatNetClientPubNode(Node):
         base_link_pose, robot_ee_pose, fixed_ee_pose = self._process_rigid_bodies(mocap_data)
         
         # check for new calibration parameters
-        calib = np.array(self.get_parameter('t_calib').get_parameter_value().double_array_value)
-        q_calib = np.array(self.get_parameter('q_calib').get_parameter_value().double_array_value)
-        calibrate = self.get_parameter('calibrate').get_parameter_value().bool_value
-        change_detected = False
+        # calib = np.array(self.get_parameter('t_calib').get_parameter_value().double_array_value)
+        # q_calib = np.array(self.get_parameter('q_calib').get_parameter_value().double_array_value)
+        # calibrate = self.get_parameter('calibrate').get_parameter_value().bool_value
+        # change_detected = False
         
-        if calibrate != self.calibrate:
-            self.get_logger().info(f"Calibration enabled changed: original {self.calibrate} new {calibrate}")
-            self.calibrate = calibrate
-            change_detected = True
+        # if calibrate != self.calibrate:
+        #     self.get_logger().info(f"Calibration enabled changed: original {self.calibrate} new {calibrate}")
+        #     self.calibrate = calibrate
+        #     change_detected = True
             
-        if not np.allclose(calib, self.calib):
-            self.get_logger().info(f"Calibration offsets changed: original {calib} new {self.calib}")
-            self.calib = calib
-        if not np.allclose(q_calib, self.q_calib):
-            self.get_logger().info(f"Quaternion calibration offsets changed: original {q_calib} new {self.q_calib}")
-            self.q_calib = q_calib
+        # if not np.allclose(calib, self.calib):
+        #     self.get_logger().info(f"Calibration offsets changed: original {calib} new {self.calib}")
+        #     self.calib = calib
+        # if not np.allclose(q_calib, self.q_calib):
+        #     self.get_logger().info(f"Quaternion calibration offsets changed: original {q_calib} new {self.q_calib}")
+        #     self.q_calib = q_calib
         # Publish unlabeled markers
         if "unlabeled_markers" in mocap_data:
             marker_msg = Marker()

@@ -1,5 +1,8 @@
 natnet_client_pub_node:
   ros__parameters:
+    client_address: 132.66.53.99
+    server_address: 132.66.51.232
+    use_multicast: False
     rate: 200.0
     base_frame: base_link
     end_effector_frame: end_effector_link

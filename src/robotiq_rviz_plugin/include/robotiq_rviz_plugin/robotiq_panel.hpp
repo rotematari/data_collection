@@ -44,6 +44,7 @@ private Q_SLOTS:
   void onOpenClicked();
   void onCloseClicked();
   void onGotoClicked();
+  void onSetupClicked();
   void onPositionChanged(int value);
   void updateStatusLabels(const QString & status_text, int position, int current);
 
@@ -65,6 +66,9 @@ private:
   QPushButton * open_btn_;
   QPushButton * close_btn_;
   QPushButton * goto_btn_;
+  QPushButton * setup_btn_;
+
+
   
   QSlider * position_slider_;
   QSlider * speed_slider_;
