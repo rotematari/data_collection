@@ -1,7 +1,0 @@
-digit_pub_node:
-  ros__parameters:
-    rate: 30.0
-    diff_with_ref: false
-    res: "VGA"
-    fps: 30  #  30, 60 for QVGA, 15, 30 for VGA
-    intensity: 15

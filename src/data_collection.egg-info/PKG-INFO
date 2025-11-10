@@ -1,0 +1,19 @@
+Metadata-Version: 2.4
+Name: data-collection
+Version: 0.1.0
+Summary: Add your description here
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: catkin-pkg>=1.1.0
+Requires-Dist: digit-interface>=0.2.1
+Requires-Dist: empy>=4.2
+Requires-Dist: filelock>=3.19.1
+Requires-Dist: lark>=1.2.2
+Requires-Dist: minimalmodbus>=2.1.1
+Requires-Dist: numpy<2
+Requires-Dist: opencv-python>=4.11.0.86
+Requires-Dist: plotly>=6.4.0
+Requires-Dist: pyrobotiqgripper>=1.0.1
+Requires-Dist: pyyaml>=6.0.2
+Requires-Dist: scipy>=1.15.3
+Requires-Dist: setuptools>=80.9.0
