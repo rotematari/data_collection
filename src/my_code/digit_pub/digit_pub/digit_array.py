@@ -26,7 +26,7 @@ class DigitArray:
         self.ref_frames = {}  # Store reference frames for each digit
         self._connect_all()
 
-    def _capture_ref_frame(self, digit, num_frames=30):
+    def _capture_ref_frame(self, digit, num_frames=10):
         """Capture reference frame for a single digit after connection"""
         if self.show_log:
             print(f"Capturing reference frame for digit {digit.serial}...")
@@ -205,7 +205,7 @@ if __name__ == "__main__":
     try:
         digit_array = DigitArray(show_log=True)
         print("\n\nStarting to show all DIGIT views. Press ESC to exit.\n\n")
-        digit_array.show_all_views(diff_with_ref=False)
+        digit_array.show_all_views(diff_with_ref=True)
     except Exception as e:
         print(f"Error: {e}")
     finally:

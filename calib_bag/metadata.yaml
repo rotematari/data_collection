@@ -2,18 +2,18 @@ rosbag2_bagfile_information:
   version: 9
   storage_identifier: mcap
   duration:
-    nanoseconds: 131079817673
+    nanoseconds: 99860116397
   starting_time:
-    nanoseconds_since_epoch: 1755166790001270402
-  message_count: 52433
+    nanoseconds_since_epoch: 1762865526402282933
+  message_count: 39946
   topics_with_message_count:
     - topic_metadata:
         name: /end_effector_pose
         type: geometry_msgs/msg/PoseStamped
         serialization_format: cdr
         offered_qos_profiles:
-          - history: unknown
-            depth: 0
+          - history: keep_last
+            depth: 10
             reliability: reliable
             durability: volatile
             deadline:
@@ -28,14 +28,14 @@ rosbag2_bagfile_information:
               nsec: 854775807
             avoid_ros_namespace_conventions: false
         type_description_hash: RIHS01_10f3786d7d40fd2b54367835614bff85d4ad3b5dab62bf8bca0cc232d73b4cd8
-      message_count: 26216
+      message_count: 19973
     - topic_metadata:
         name: /natnet/robot_ee_pose
         type: geometry_msgs/msg/PoseStamped
         serialization_format: cdr
         offered_qos_profiles:
-          - history: unknown
-            depth: 0
+          - history: keep_last
+            depth: 10
             reliability: reliable
             durability: volatile
             deadline:
@@ -50,7 +50,7 @@ rosbag2_bagfile_information:
               nsec: 854775807
             avoid_ros_namespace_conventions: false
         type_description_hash: RIHS01_10f3786d7d40fd2b54367835614bff85d4ad3b5dab62bf8bca0cc232d73b4cd8
-      message_count: 26217
+      message_count: 19973
   compression_format: ""
   compression_mode: ""
   relative_file_paths:
@@ -58,9 +58,9 @@ rosbag2_bagfile_information:
   files:
     - path: calib_bag_0.mcap
       starting_time:
-        nanoseconds_since_epoch: 1755166790001270402
+        nanoseconds_since_epoch: 1762865526402282933
       duration:
-        nanoseconds: 131079817673
-      message_count: 52433
+        nanoseconds: 99860116397
+      message_count: 39946
   custom_data: ~
   ros_distro: jazzy

@@ -80,7 +80,8 @@ class RobotiqGripperNode(Node):
                 
             elif msg.command == "goto":
                 self.gripper.goTo(msg.position, msg.speed, msg.force)
-                self.get_logger().info(f"Moving to position {msg.position}")
+                self.get_logger().info(f"Moving to position {msg.position} with speed {msg.speed} and force {msg.force}")
+                
                 
             else:
                 self.get_logger().warn(f"Unknown command: {msg.command}")

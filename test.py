@@ -2,23 +2,26 @@ import random
 import math
 import plotly.graph_objects as go
 
-def sample_positions(n, goal_x):
-    x_fixed = 0.595
+def sample_positions(n):
+    
+    wire_length = 0.38
+    
+
+    
+    x_start = 0.15
+    y_start = -0.286
+    z_start = 0.206
+    
+    x_fixed = x_start + wire_length
     y_fixed = -0.295
     z_fixed = 0.173
-    
-    x_start = 0.105
-    y_start = -0.295
-    z_start = 0.173
-    wire_length = 0.49
-    
-    x_min = x_start + 0.08
-    x_max = x_fixed - 0.1
+    x_min = x_start + 0.05
+    x_max = x_fixed - 0.02
 
     samples = []
     for _ in range(n):
         x = random.uniform(x_min, x_max)
-        y_sacl = random.uniform(-1, 1)
+        y_sacl = random.uniform(-0.6, 0.6)
         
         
         y = math.sqrt(wire_length**2 - (x_fixed - x)**2)*y_sacl + y_fixed
@@ -74,6 +77,5 @@ def visualize(samples):
 
 if __name__ == "__main__":
     n = 1000
-    goal_x = 0.105
-    samples = sample_positions(n, goal_x)
+    samples = sample_positions(n)
     visualize(samples)

@@ -72,7 +72,7 @@ def build_calib_inputs(
     return R_world2marker, t_world2marker, R_base2gripper, t_base2gripper
 
 if __name__ == "__main__":
-    bag_path = "calib_bag/calib_bag_0.mcap"
+    bag_path = "/home/rotem/data_collection/calib_bag/calib/calib_0.mcap"
     # NatNet rigid body attached to the camera (marker frame), pose in 'world'
     natnet_topic = "/natnet/robot_ee_pose"     # <-- update if different
     # Robot EE pose in base frame (base→gripper)
@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
     # get sample data
     # randomly sample n synchronized pose pairs
-    n_samples = 15  # set desired number of samples
+    n_samples = 20  # set desired number of samples
     total = len(R_w2c)
     if n_samples <= 0 or n_samples >= total:
         print(f"Using all {total} pairs (n_samples={n_samples} out of range).")

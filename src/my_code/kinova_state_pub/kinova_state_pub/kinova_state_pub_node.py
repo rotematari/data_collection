@@ -24,10 +24,14 @@ class EndEffectorPosePublisher(Node):
         self.timeout_sec = self.get_parameter('timeout_sec').get_parameter_value().double_value
 
         self.publisher_ = self.create_publisher(PoseStamped, topic, 10)
+        # create natnet subscriber
         self.natnet_sub = self.create_subscription(
-            PoseStamped, "natnet/robot_ee_pose", self.timer_callback, 10
+            PoseStamped,
+            '/natnet/robot_ee_pose',
+            self.sub_natnet_callback,
+            10
         )
-        
+
         self.tf_buffer = Buffer(cache_time=Duration(seconds=5.0))
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
@@ -35,8 +39,7 @@ class EndEffectorPosePublisher(Node):
         # self.timer = self.create_timer(timer_period, self.timer_callback)
         self.get_logger().info(f"Publishing {self.ee_frame} pose in {self.base_frame} on '{topic}' at {rate} Hz")
 
-    def timer_callback(self,msg):
-        
+    def sub_natnet_callback(self, msg: PoseStamped):
         time = msg.header.stamp
         # self.get_logger().info(f"Received pose at time {time.sec}.{time.nanosec} for {self.ee_frame} in {self.base_frame}")
         try:

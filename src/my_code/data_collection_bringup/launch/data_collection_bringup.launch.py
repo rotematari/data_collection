@@ -23,6 +23,8 @@ def generate_launch_description():
     bringup_cfg = safe_load_yaml('data_collection_bringup', 'data_collection_bringup.yaml')
     print(f"Using Bringup config: {bringup_cfg}")
     
+    
+    
     kinova_node = Node(
         package='kinova_state_pub',
         executable='end_effector_pose_pub_node',
@@ -60,23 +62,28 @@ def generate_launch_description():
     ),
     # launch_arguments={'device': '/dev/ttyUSB0', 'rviz': 'true'}.items(),  # optional overrides
 )
+
+    # full data publisher with some delay to allow other nodes to start
+    full_data_pub_node = TimerAction(
+        period=1.0,
+        actions=[
+            Node(
+                package='full_data_pub',
+                executable='full_data_pub',
+                name='full_data_pub',
+                output='screen',
+                parameters=[bringup_cfg],
+            )
+        ]
+    )
     
     
-    # description_package = "data_collection_bringup"
-    # rviz_config_file = PathJoinSubstitution(
-    #     [FindPackageShare(description_package), "rviz", "data_collection_config.rviz"]
-    # )
-    # rviz_node = Node(
-    #     package="rviz2",
-    #     executable="rviz2",
-    #     name="rviz2",
-    #     output="log",
-    #     arguments=["-d", rviz_config_file],
-    # )
-    # delay_rviz_node = TimerAction(period=2.0, actions=[rviz_node])
     return LaunchDescription([
-        # kinova_node,
+        kinova_node,
         natnet_node,
         digit_node,
         robotiq_launch,
+        # delay_rviz_node,
+        full_data_pub_node,
+        
     ])

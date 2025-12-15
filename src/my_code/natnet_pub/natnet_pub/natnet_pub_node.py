@@ -21,7 +21,7 @@ class NatNetClientPubNode(Node):
         self.declare_parameter('server_address', '132.66.51.232')
         self.declare_parameter('use_multicast', False)
         
-        self.declare_parameter('rate', 200.0)  # Hz
+        self.declare_parameter('rate', 500.0)  # Hz
         self.declare_parameter('base_frame', 'base_link')
         self.declare_parameter('end_effector_frame', 'end_effector_link')
         self.declare_parameter('calibrate', True)
@@ -305,11 +305,7 @@ class NatNetClientPubNode(Node):
         return output_pose
 
     def timer_callback(self):
-        """for the nat net 
-        robot_x =  -natnet[0]
-        robot_y = natnet[2]
-        robot_z = natnet[1]
-        """
+
         self.calib_natnet_world()
         now_time = self.get_clock().now().to_msg()
         # if (now_time - self.last_time).nanoseconds > 1e6:  # Avoid too frequent calls
@@ -328,24 +324,6 @@ class NatNetClientPubNode(Node):
         base_link_pose, robot_ee_pose, fixed_ee_pose = self._process_rigid_bodies_to_tf(mocap_data)
         base_link_pose, robot_ee_pose, fixed_ee_pose = self._process_rigid_bodies(mocap_data)
         
-        # check for new calibration parameters
-        # calib = np.array(self.get_parameter('t_calib').get_parameter_value().double_array_value)
-        # q_calib = np.array(self.get_parameter('q_calib').get_parameter_value().double_array_value)
-        # calibrate = self.get_parameter('calibrate').get_parameter_value().bool_value
-        # change_detected = False
-        
-        # if calibrate != self.calibrate:
-        #     self.get_logger().info(f"Calibration enabled changed: original {self.calibrate} new {calibrate}")
-        #     self.calibrate = calibrate
-        #     change_detected = True
-            
-        # if not np.allclose(calib, self.calib):
-        #     self.get_logger().info(f"Calibration offsets changed: original {calib} new {self.calib}")
-        #     self.calib = calib
-        # if not np.allclose(q_calib, self.q_calib):
-        #     self.get_logger().info(f"Quaternion calibration offsets changed: original {q_calib} new {self.q_calib}")
-        #     self.q_calib = q_calib
-        # Publish unlabeled markers
         if "unlabeled_markers" in mocap_data:
             marker_msg = Marker()
             marker_msg.header.stamp = self.get_clock().now().to_msg()

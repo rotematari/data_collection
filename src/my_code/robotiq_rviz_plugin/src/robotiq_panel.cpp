@@ -124,7 +124,9 @@ void RobotiqPanel::setupUI()
   connect(open_btn_, &QPushButton::clicked, this, &RobotiqPanel::onOpenClicked);
   connect(close_btn_, &QPushButton::clicked, this, &RobotiqPanel::onCloseClicked);
   connect(goto_btn_, &QPushButton::clicked, this, &RobotiqPanel::onGotoClicked);
+
   connect(setup_btn_, &QPushButton::clicked, this, &RobotiqPanel::onSetupClicked);
+
   connect(position_slider_, QOverload<int>::of(&QSlider::valueChanged), this, &RobotiqPanel::onPositionChanged);
   // connect(this, &RobotiqPanel::statusReceived, this, &RobotiqPanel::updateStatusLabels);
 }
@@ -182,43 +184,53 @@ void RobotiqPanel::onPositionChanged(int value)
   // Optional: real-time position feedback
   Q_UNUSED(value)
 }
+
 void RobotiqPanel::onSetupClicked()
 {
+
   // open gripper
   if (command_pub_) {
     auto msg = robotiq_msgs::msg::RobotiqGripperCommand();
     msg.command = "open";
     command_pub_->publish(msg);
   }
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  if (command_pub_) {
+    auto msg = robotiq_msgs::msg::RobotiqGripperCommand();
+    msg.command = "activate";
+    command_pub_->publish(msg);
+  }
 
+  RCLCPP_INFO(node_->get_logger(), "opened gripper");
+  
+  // wait for a second
+  if (command_pub_) {
+    auto msg = robotiq_msgs::msg::RobotiqGripperCommand();
+    msg.command = "goto";
+    msg.position = static_cast<uint8_t>(200);
+    msg.speed = static_cast<uint8_t>(10);
+    msg.force = static_cast<uint8_t>(50);
+    command_pub_->publish(msg);
+    RCLCPP_INFO(node_->get_logger(), "Moving to position 200 with speed 10 and force 50");
+  }
+
+  RCLCPP_INFO(node_->get_logger(), "waiting for 5 seconds to reach position 200");
   // wait for a second
   std::this_thread::sleep_for(std::chrono::seconds(5));
   // log the sleep time
-  RCLCPP_INFO(node_->get_logger(), "Waited for 5 seconds");
+  // RCLCPP_INFO(node_->get_logger(), "Waited for 5 seconds");
 
-  // close gripper
   if (command_pub_) {
     auto msg = robotiq_msgs::msg::RobotiqGripperCommand();
-    msg.command = "close";
+    msg.command = "goto";
+    msg.position = static_cast<uint8_t>(255);
+    msg.speed = static_cast<uint8_t>(10);
+    msg.force = static_cast<uint8_t>(255);
     command_pub_->publish(msg);
   }
+  RCLCPP_INFO(node_->get_logger(), "Moving to position 255 with speed 10 and force 255");
 }
 
-// void RobotiqPanel::updateStatusLabels(const QString & status_text, int position, int current)
-// {
-//   status_label_->setText(QString("Status: %1").arg(status_text));
-//   position_label_->setText(QString("Position: %1").arg(position));
-//   current_label_->setText(QString("Current: %1").arg(current));
-// }
-
-// void RobotiqPanel::statusCallback(const robotiq_msgs::msg::RobotiqGripperStatus::SharedPtr msg)
-// {
-//   QString status_text = msg->is_active ? "Active" : "Inactive";
-//   if (msg->is_moving) status_text += " (Moving)";
-//   if (msg->object_detected) status_text += " (Object Detected)";
-
-//   emit statusReceived(status_text, static_cast<int>(msg->position_actual), static_cast<int>(msg->current));
-// }
 
 } // namespace robotiq_rviz_plugin
 
