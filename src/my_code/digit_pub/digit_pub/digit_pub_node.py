@@ -1,5 +1,6 @@
-from typing import List,Dict, Any
+from typing import List, Dict, Any
 
+import cv2
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
@@ -7,11 +8,13 @@ from std_msgs.msg import String
 from digit_pub.digit_array import DigitArray
 from cv_bridge import CvBridge
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
+import numpy as np
+
 
 class DigitPublisherNode(Node):
     def __init__(self):
         super().__init__("digit_pub_node")
-        # self.declare_parameter("rate", 30.0)
+        self.declare_parameter("rate", 30.0)
         self.declare_parameter("diff_with_ref", False)
         self.declare_parameter("resolution", "VGA")
         self.declare_parameter("fps", "high")  # "high" or "low"
@@ -30,7 +33,12 @@ class DigitPublisherNode(Node):
             else:
                 self.fps = 30
         
-        self.rate = int(self.fps*1.2)
+        # self.rate = int(self.fps*2)  # publish at double the fps
+        # self.rate = self.get_parameter("rate").get_parameter_value().double_value
+        self.rate = min(
+                        self.get_parameter("rate").get_parameter_value().double_value,
+                        float(self.fps),
+                    )
         self.diff_with_ref = self.get_parameter("diff_with_ref").get_parameter_value().bool_value
         
         self.intesity = self.get_parameter("intensity").get_parameter_value().integer_value
@@ -45,15 +53,6 @@ class DigitPublisherNode(Node):
         )
         self.digit_publishers: List = []
 
-        
-
-        
-        # self.rate = self.get_parameter("rate").get_parameter_value().double_value
-        # self.diff_with_ref = self.get_parameter("diff_with_ref").get_parameter_value().bool_value
-        
-        # self.get_logger().info("DigitPublisherNode started.with rate: {}".format(self.rate))
-        # self.get_logger().info(f"diff_with_ref is set to: {self.diff_with_ref}")
-
         # Latched-like QoS for late joiners (rosbag2, rviz, etc.)
         # -------- QoS --------
 
@@ -65,10 +64,10 @@ class DigitPublisherNode(Node):
             depth=1
         )
         self.live_qos = QoSProfile(
-            reliability=ReliabilityPolicy.BEST_EFFORT,
+            reliability=ReliabilityPolicy.RELIABLE,
             durability=DurabilityPolicy.VOLATILE,
             history=HistoryPolicy.KEEP_LAST,
-            depth=10
+            depth=2
         )
         # -------- Publishers --------
         self.live_publishers: Dict[str, Any] = {}  # serial -> pub
@@ -87,10 +86,12 @@ class DigitPublisherNode(Node):
         
 
     def timer_callback(self):
-
+        
+        
         if len(self.digit_array.digits) == 0:
             # self.get_logger().warn("No DIGIT devices connected.")
             return
+        
         for digit in self.digit_array.digits:
             serial = digit.serial
             if serial not in self.live_publishers:
@@ -104,12 +105,15 @@ class DigitPublisherNode(Node):
                     else:
                         frame = digit.get_frame()
                 else:
+
                     frame = digit.get_frame()
                 
+                frame = np.ascontiguousarray(frame)
                 msg = self.bridge.cv2_to_imgmsg(frame, encoding="bgr8")
                 msg.header.stamp = self.get_clock().now().to_msg()
                 msg.header.frame_id = serial
                 self.live_publishers[serial].publish(msg)
+
             except Exception as e:
                 self.get_logger().error(f"Failed to get or publish frame: {e}")
                 digit.disconnect()
@@ -122,22 +126,29 @@ class DigitPublisherNode(Node):
                 except Exception as e:
                     self.get_logger().error(f"Failed to reconnect to {digit.serial}: {e}")
 
-    def pub_ref_once(self):
+    def _publish_ref_for_serial(self, serial: str) -> bool:
+        """Publish reference frame for a single DIGIT sensor.
         
-        """Publish reference frames exactly once per connected DIGIT"""
-        for digit in self.digit_array.digits:
-            serial = digit.serial
-            ref = self.digit_array.get_reference_frame(serial)
-            if ref is None:
-                self.get_logger().warn(f"No reference frame available for {serial}")
-                continue
+        Returns:
+            True if published successfully, False otherwise.
+        """
+        ref = self.digit_array.get_reference_frame(serial)
+        if ref is None:
+            self.get_logger().warn(f"No reference frame available for {serial}")
+            return False
 
-            imsg = self.bridge.cv2_to_imgmsg(ref, encoding="bgr8")
-            imsg.header.stamp = self.get_clock().now().to_msg()
-            imsg.header.frame_id = serial
-            self.ref_publishers[serial].publish(imsg)
-            self.get_logger().info(f"Published ref (raw) for {serial}")
-            
+        imsg = self.bridge.cv2_to_imgmsg(ref, encoding="bgr8")
+        imsg.header.stamp = self.get_clock().now().to_msg()
+        imsg.header.frame_id = serial
+        self.ref_publishers[serial].publish(imsg)
+        self.get_logger().info(f"Published ref (raw) for {serial}")
+        return True
+
+    def pub_ref_once(self):
+        """Publish reference frames exactly once per connected DIGIT."""
+        for digit in self.digit_array.digits:
+            self._publish_ref_for_serial(digit.serial)
+
     # ---------------- Command handling ----------------
     def cmd_callback(self, msg: String):
         if msg.data == "save_ref":
@@ -149,33 +160,17 @@ class DigitPublisherNode(Node):
 
             # Publish exactly once per sensor (TRANSIENT_LOCAL keeps it available)
             for digit in self.digit_array.digits:
-                serial = digit.serial
-                ref = self.digit_array.get_reference_frame(serial)
-                if ref is None:
-                    self.get_logger().warn(f"No reference frame available for {serial}")
-                    continue
-
-                imsg = self.bridge.cv2_to_imgmsg(ref, encoding="bgr8")
-                imsg.header.stamp = self.get_clock().now().to_msg()
-                imsg.header.frame_id = serial
-                self.ref_publishers[serial].publish(imsg)
-                self.get_logger().info(f"Published ref (raw) for {serial}")
+                self._publish_ref_for_serial(digit.serial)
                 
     def _set_up_publishers(self):
         # Create live and ref publishers per connected DIGIT
         for digit in self.digit_array.digits:
             serial = digit.serial
-
             # Live topic per serial
             live_topic = f"/digit/{serial}/image_raw"
             self.live_publishers[serial] = self.create_publisher(Image, live_topic, self.live_qos)
             self.get_logger().info(f"Live publisher: {live_topic}")
 
-            # Ref topic per serial (type depends on compressed/raw)
-            # if self.ref_publish_compressed:
-            #     ref_topic = f"/digit/{serial}/ref_image/compressed"
-            #     self.ref_publishers[serial] = self.create_publisher(CompressedImage, ref_topic, self.ref_qos)
-            # else:
             ref_topic = f"/digit/{serial}/ref_image"
             self.ref_publishers[serial] = self.create_publisher(Image, ref_topic, self.ref_qos)
             self.get_logger().info(f"Ref publisher (latched): {ref_topic}")

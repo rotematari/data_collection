@@ -7,11 +7,12 @@ from visualization_msgs.msg import Marker
 from builtin_interfaces.msg import Duration
 from tf2_ros import Buffer, TransformListener,StaticTransformBroadcaster,TransformBroadcaster
 from sensor_msgs.msg import Image
-
+from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
 # Import your NatNetClient (adjust import to match your structure)
 from natnet_client.NatNetClient import NatNetClient
 import time
 
+import tf_transformations
 from scipy.spatial.transform import Rotation as R
 class NatNetClientPubNode(Node):
     def __init__(self):
@@ -31,18 +32,26 @@ class NatNetClientPubNode(Node):
         self.declare_parameter('robot_ee_rb_id', 3)
         self.declare_parameter('fixed_ee_rb_id', 1)
 
+        
+        qos = QoSProfile(
+            reliability=ReliabilityPolicy.RELIABLE,
+            durability=DurabilityPolicy.VOLATILE,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=10
+        )
         self.unlabeled_marker_publisher_ = self.create_publisher(
-            Marker, "natnet/unlabeled_marker_data", 10
+            Marker, "natnet/unlabeled_marker_data", qos
         )  
         self.base_link_publisher_ = self.create_publisher(
-            PoseStamped, "natnet/base_link_pose", 10
+            PoseStamped, "natnet/base_link_pose", qos
         )
         self.robot_ee_publisher_ = self.create_publisher(
-            PoseStamped, "natnet/robot_ee_pose", 10
+            PoseStamped, "natnet/robot_ee_pose", qos
         )
         self.fixed_ee_publisher_ = self.create_publisher(
-            PoseStamped, "natnet/fixed_ee_pose", 10
+            PoseStamped, "natnet/fixed_ee_pose", qos
         )
+        
 
         rate = self.get_parameter('rate').get_parameter_value().double_value
         self.timer = self.create_timer(1.0 / rate, self.timer_callback)
@@ -53,7 +62,7 @@ class NatNetClientPubNode(Node):
         self.robot_ee_frame = self.get_parameter('end_effector_frame').get_parameter_value().string_value
         # Calibration parameters
         self.calibrate = self.get_parameter('calibrate').get_parameter_value().bool_value
-        self.calib = np.array(self.get_parameter('t_calib').get_parameter_value().double_array_value)
+        self.t_calib = np.array(self.get_parameter('t_calib').get_parameter_value().double_array_value)
         self.q_calib = np.array(self.get_parameter('q_calib').get_parameter_value().double_array_value)
         self.robot_base_rb_id = self.get_parameter('robot_base_rb_id').get_parameter_value().integer_value
         self.robot_ee_rb_id = self.get_parameter('robot_ee_rb_id').get_parameter_value().integer_value
@@ -67,7 +76,7 @@ class NatNetClientPubNode(Node):
         self.get_logger().info(f"Base frame: {self.base_frame}")
         self.get_logger().info(f"End effector frame: {self.robot_ee_frame}")
         self.get_logger().info(f"Calibration enabled: {self.calibrate}")
-        self.get_logger().info(f"Calibration offsets: {self.calib}")
+        self.get_logger().info(f"Calibration offsets: {self.t_calib}")
         self.get_logger().info(f"Quaternion calibration offsets: {self.q_calib}")
         self.get_logger().info(f"Robot base rigid body ID: {self.robot_base_rb_id}")
         self.get_logger().info(f"Robot end effector rigid body ID: {self.robot_ee_rb_id}")
@@ -87,6 +96,12 @@ class NatNetClientPubNode(Node):
         self.tf_listener = TransformListener(self.tf_buffer, self)
         self.tf_static_broadcaster = StaticTransformBroadcaster(self)
         self.tf_broadcaster = TransformBroadcaster(self)
+        
+        # Pre-compute calibration transform matrix (avoids recomputing per marker)
+        self._calib_matrix = tf_transformations.concatenate_matrices(
+            tf_transformations.translation_matrix(self.t_calib),
+            tf_transformations.quaternion_matrix(self.q_calib)
+        )
         # send static transforms for baselink->natnet world
 
     def calib_natnet_world(self):
@@ -94,9 +109,9 @@ class NatNetClientPubNode(Node):
         tf.header.stamp = self.get_clock().now().to_msg()
         tf.header.frame_id = self.base_frame
         tf.child_frame_id = self.natnet_world_frame
-        tf.transform.translation.x = float(self.calib[0])
-        tf.transform.translation.y = float(self.calib[1])
-        tf.transform.translation.z = float(self.calib[2])
+        tf.transform.translation.x = float(self.t_calib[0])
+        tf.transform.translation.y = float(self.t_calib[1])
+        tf.transform.translation.z = float(self.t_calib[2])
         tf.transform.rotation.x = float(self.q_calib[0])
         tf.transform.rotation.y = float(self.q_calib[1])
         tf.transform.rotation.z = float(self.q_calib[2])
@@ -127,7 +142,7 @@ class NatNetClientPubNode(Node):
         else:
             self.get_logger().info("NatNet client successfully connected to server.")
 
-    def _process_rigid_bodies_to_tf(self, mocap_data) -> Tuple[TransformStamped, TransformStamped, TransformStamped]:
+    def _process_rigid_bodies_to_tf(self, mocap_data,time_stamp) -> Tuple[TransformStamped, TransformStamped, TransformStamped]:
         """Process rigid body data and return pose messages."""
 
         base_link_tf = TransformStamped()
@@ -136,13 +151,13 @@ class NatNetClientPubNode(Node):
         if "rigid_bodies" not in mocap_data:
             self.get_logger().warn("No rigid bodies in mocap data.")
             return base_link_tf, robot_ee_tf, fixed_ee_tf
-        
+        # time_stamp = self.get_clock().now().to_msg()
         for rb_id, rb in mocap_data["rigid_bodies"].items():
             # print(f"Received rigid body {rb_id} data:")
             # print(rb)
             if rb["id"] == self.robot_base_rb_id:
                 # robot_base
-                base_link_tf.header.stamp = self.get_clock().now().to_msg()
+                base_link_tf.header.stamp = time_stamp
                 base_link_tf.header.frame_id = self.natnet_world_frame
                 base_link_tf.child_frame_id = 'natnet_robot_base'
                 base_link_tf.transform.translation.x = rb["pose"]["position"][0]
@@ -159,7 +174,7 @@ class NatNetClientPubNode(Node):
             elif rb["id"] == self.robot_ee_rb_id:
                 # robot end effector
                 
-                robot_ee_tf.header.stamp = self.get_clock().now().to_msg()
+                robot_ee_tf.header.stamp = time_stamp
                 robot_ee_tf.header.frame_id = self.natnet_world_frame
                 robot_ee_tf.child_frame_id = 'natnet_robot_ee'
                 robot_ee_tf.transform.translation.x = rb["pose"]["position"][0]
@@ -173,7 +188,7 @@ class NatNetClientPubNode(Node):
                 
             elif rb["id"] == self.fixed_ee_rb_id:
                 # fixed end effector
-                fixed_ee_tf.header.stamp = self.get_clock().now().to_msg()
+                fixed_ee_tf.header.stamp = time_stamp
                 fixed_ee_tf.header.frame_id = self.natnet_world_frame
                 fixed_ee_tf.child_frame_id = 'natnet_fixed_ee'
                 fixed_ee_tf.transform.translation.x = rb["pose"]["position"][0]
@@ -184,7 +199,48 @@ class NatNetClientPubNode(Node):
                 fixed_ee_tf.transform.rotation.z = rb["pose"]["orientation"][2]
                 fixed_ee_tf.transform.rotation.w = rb["pose"]["orientation"][3]
                 self.tf_broadcaster.sendTransform(fixed_ee_tf)
+                
+                R_base_to_world_nn = R.from_quat(self.q_calib)
+                t_base_to_world_nn = self.t_calib
+                
+                R_world_nn_to_fixed_ee = R.from_quat([
+                    rb["pose"]["orientation"][0],
+                    rb["pose"]["orientation"][1],
+                    rb["pose"]["orientation"][2],
+                    rb["pose"]["orientation"][3],
+                ])
+                t_world_nn_to_fixed_ee = np.array([
+                    rb["pose"]["position"][0],
+                    rb["pose"]["position"][1],
+                    rb["pose"]["position"][2],
+                ])
+                
+                t_base_to_fixed_ee = R_base_to_world_nn.as_matrix() @ t_world_nn_to_fixed_ee + t_base_to_world_nn
+                R_base_to_fixed_ee = R_base_to_world_nn * R_world_nn_to_fixed_ee
 
+                fixed_ee_in_base_tf = TransformStamped()
+                fixed_ee_in_base_tf.header.frame_id = self.base_frame
+                fixed_ee_in_base_tf.header.stamp = time_stamp
+                fixed_ee_in_base_tf.child_frame_id = 'fixed_ee_in_base_link'
+                fixed_ee_in_base_tf.transform.translation.x = t_base_to_fixed_ee[0]
+                fixed_ee_in_base_tf.transform.translation.y = t_base_to_fixed_ee[1]
+                fixed_ee_in_base_tf.transform.translation.z = t_base_to_fixed_ee[2]
+                fixed_ee_in_base_tf.transform.rotation.x = R_base_to_fixed_ee.as_quat()[0]
+                fixed_ee_in_base_tf.transform.rotation.y = R_base_to_fixed_ee.as_quat()[1]
+                fixed_ee_in_base_tf.transform.rotation.z = R_base_to_fixed_ee.as_quat()[2]
+                fixed_ee_in_base_tf.transform.rotation.w = R_base_to_fixed_ee.as_quat()[3]
+                self.tf_broadcaster.sendTransform(fixed_ee_in_base_tf)
+                
+                fixed_ee_in_base_pose = PoseStamped()
+                fixed_ee_in_base_pose.header = fixed_ee_in_base_tf.header
+                fixed_ee_in_base_pose.pose.position.x = fixed_ee_in_base_tf.transform.translation.x
+                fixed_ee_in_base_pose.pose.position.y = fixed_ee_in_base_tf.transform.translation.y
+                fixed_ee_in_base_pose.pose.position.z = fixed_ee_in_base_tf.transform.translation.z
+                fixed_ee_in_base_pose.pose.orientation.x = fixed_ee_in_base_tf.transform.rotation.x
+                fixed_ee_in_base_pose.pose.orientation.y = fixed_ee_in_base_tf.transform.rotation.y
+                fixed_ee_in_base_pose.pose.orientation.z = fixed_ee_in_base_tf.transform.rotation.z
+                fixed_ee_in_base_pose.pose.orientation.w = fixed_ee_in_base_tf.transform.rotation.w
+                self.fixed_ee_publisher_.publish(fixed_ee_in_base_pose)
             else:
                 self.get_logger().warn(f"Unknown rigid body ID: {rb['id']}")
 
@@ -245,10 +301,7 @@ class NatNetClientPubNode(Node):
 
             else:
                 self.get_logger().warn(f"Unknown rigid body ID: {rb['id']}")
-        # Publish the poses
-        # robot_ee_pose.pose.position.x -= base_link_pose.pose.position.x
-        # robot_ee_pose.pose.position.y -= base_link_pose.pose.position.y
-        # robot_ee_pose.pose.position.z -= base_link_pose.pose.position.z
+
         
         self.base_link_publisher_.publish(base_link_pose)
         self.robot_ee_publisher_.publish(robot_ee_pose)
@@ -307,27 +360,27 @@ class NatNetClientPubNode(Node):
     def timer_callback(self):
 
         self.calib_natnet_world()
-        now_time = self.get_clock().now().to_msg()
+        # s_time = self.get_clock().now()
         # if (now_time - self.last_time).nanoseconds > 1e6:  # Avoid too frequent calls
         # self.get_logger().info(f"Digit callback called at {now_time.seconds_nanoseconds()[0]}.{now_time.seconds_nanoseconds()[1]}")
-        self.last_time = now_time
         # Check if we have frame data available
         if self.client.current_frame_data is None:
             # self.get_logger().warn("No frame data available from NatNet client.")
             return
 
         mocap_data = self.client.get_structured_mocap_data()
+        
         if mocap_data is None:
-            # self.get_logger().warn("No mocap data received.")
+            self.get_logger().warn("No mocap data received.")
             return
+        base_link_pose, robot_ee_pose, fixed_ee_pose = self._process_rigid_bodies_to_tf(mocap_data, self.get_clock().now().to_msg())
+        # base_link_pose, robot_ee_pose, fixed_ee_pose = self._process_rigid_bodies(mocap_data)
         
-        base_link_pose, robot_ee_pose, fixed_ee_pose = self._process_rigid_bodies_to_tf(mocap_data)
-        base_link_pose, robot_ee_pose, fixed_ee_pose = self._process_rigid_bodies(mocap_data)
         
-        if "unlabeled_markers" in mocap_data:
+        try :
             marker_msg = Marker()
             marker_msg.header.stamp = self.get_clock().now().to_msg()
-            marker_msg.header.frame_id = self.natnet_world_frame  
+            marker_msg.header.frame_id = self.base_frame
             
             marker_msg.type = Marker.POINTS
             marker_msg.action = Marker.ADD
@@ -339,15 +392,33 @@ class NatNetClientPubNode(Node):
             marker_msg.color.b = 0.0
             marker_msg.lifetime = Duration(sec=0)  # 0 means forever
             points_list = []
+            
             for marker in mocap_data["labeled_markers"]['unlabeled']:
                 p = Point()
-                p.x, p.y, p.z = marker["position"]
-
+                p_np = np.array([marker["position"][0], marker["position"][1], marker["position"][2], 1.0])
+                p2 = self._calib_matrix.dot(p_np)
+                
+                p.x, p.y, p.z = p2[0], p2[1], p2[2]
                 points_list.append(p)
             marker_msg.points = points_list
 
             self.unlabeled_marker_publisher_.publish(marker_msg)
+            
+        except Exception as e:
+            self.get_logger().error(f"Error publishing unlabeled markers: {e}")
             # self.get_logger().info(f"Published {len(marker_msg.points)} unlabeled markers")
+        
+        # self.get_logger().info(f"NatNet processing time: {(e_time - s_time).nanoseconds / 1e9:.6f} s")
+
+    def destroy_node(self):
+        """Graceful shutdown of NatNet client."""
+        if self.client_is_running:
+            try:
+                self.client.shutdown()
+                self.get_logger().info("NatNet client shut down.")
+            except Exception as e:
+                self.get_logger().warn(f"Error shutting down NatNet client: {e}")
+        super().destroy_node()
 
 
 def main(args=None):

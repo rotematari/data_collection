@@ -1,0 +1,27 @@
+recorder:
+  ros__parameters:
+    use_sim_time: false
+    record:
+      topics:
+        - /digit/D21118/image_raw_throttled
+        - /digit/D21122/image_raw_throttled
+        - /digit/D21123/image_raw_throttled
+        - /digit/D21124/image_raw_throttled
+        - /joint_states_throttled
+        - /natnet/unlabeled_marker_data_throttled
+        - /natnet/fixed_ee_pose_throttled
+        - /end_effector_pose_throttled
+        
+
+      is_discovery_disabled: false
+      topic_polling_interval:
+        sec: 0
+        nsec: 10000000 # 10 ms
+      include_hidden_topics: true
+      ignore_leaf_topics: false
+      start_paused: false
+
+    storage:
+      # uri: "/home/rotem/data_collection/test2"
+      storage_id: "mcap"
+

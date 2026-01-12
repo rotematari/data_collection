@@ -84,6 +84,6 @@ def generate_launch_description():
         digit_node,
         robotiq_launch,
         # delay_rviz_node,
-        full_data_pub_node,
+        # full_data_pub_node,
         
     ])

@@ -8,7 +8,7 @@ import numpy as np
 class DigitArray:
     def __init__(self,
                 resolution="QVGA",
-                fps=30,
+                fps=60,
                 intensity=15,
                 show_log=False,
                 ros_logger=None):
@@ -37,6 +37,12 @@ class DigitArray:
         for i in range(num_frames):
             try:
                 frame = digit.get_frame()
+                if frame.ndim == 2:
+                    # DIGITs usually send BayerGB. If colors are swapped (blue face), try BG2BGR
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BAYER_GB2BGR)
+                elif frame.ndim == 3 and frame.shape[2] == 1:
+                    # Handle case where it is (H, W, 1)
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BAYER_GB2BGR)
             except Exception as e:
                 print(f"Error capturing frame from {digit.serial}: {e}")
                 
@@ -178,6 +184,15 @@ class DigitArray:
             while True:
                 for digit in self.digits:
                     frame = digit.get_frame()
+                    # --- FIX START: Handle Raw Bayer Data ---
+                    # If frame is single channel (grayscale) or raw, convert it
+                    # if frame.ndim == 2:
+                    #     # DIGITs usually send BayerGB. If colors are swapped (blue face), try BG2BGR
+                    #     frame = cv2.cvtColor(frame, cv2.COLOR_BAYER_GB2BGR)
+                    # elif frame.ndim == 3 and frame.shape[2] == 1:
+                    #     # Handle case where it is (H, W, 1)
+                    #     frame = cv2.cvtColor(frame, cv2.COLOR_BAYER_GB2BGR)
+                    # --- FIX END ---
                     if diff_with_ref:
                         ref_frame = self.get_reference_frame(digit.serial)
                         if ref_frame is not None:
@@ -203,9 +218,9 @@ class DigitArray:
 
 if __name__ == "__main__":
     try:
-        digit_array = DigitArray(show_log=True)
+        digit_array = DigitArray(show_log=True ,resolution="QVGA", fps=30, intensity=15)
         print("\n\nStarting to show all DIGIT views. Press ESC to exit.\n\n")
-        digit_array.show_all_views(diff_with_ref=True)
+        digit_array.show_all_views(diff_with_ref=False  )
     except Exception as e:
         print(f"Error: {e}")
     finally:
