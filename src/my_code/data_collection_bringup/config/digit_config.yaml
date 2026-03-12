@@ -2,12 +2,12 @@ digit_pub_node:
   ros__parameters:
     rate: 30.0
     diff_with_ref: false
-    res: "VGA"
+    res: "QVGA"
     fps: 30  #  30, 60 for QVGA, 15, 30 for VGA
     intensity: 15
 
 
-natnet_pub_node:
+natnet_client_pub_node:
   ros__parameters:
     server_address: "132.66.210.173"
     client_address: "132.66.53.99"

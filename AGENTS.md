@@ -22,7 +22,7 @@ data_collection/
 │   ├── digit_pub/                  # DIGIT tactile sensor publisher
 │   ├── kinova_state_pub/           # Robot end-effector pose publisher
 │   ├── natnet_pub/                 # OptiTrack motion capture publisher
-│   ├── full_data_pub/              # [DEPRECATED] Synchronized data publisher
+│   ├── dlo_inference/              # Optional real-time DLO inference node
 │   ├── robotiq_2f_85_driver/       # Robotiq gripper driver
 │   ├── robotiq_msgs/               # Gripper message definitions
 │   ├── robotiq_rviz_plugin/        # RViz plugin for gripper control
@@ -110,11 +110,31 @@ data_collection/
 
 ---
 
-### 4. `full_data_pub` (full_data_pub package) — DEPRECATED
+### 4. `dlo_inference_node` (dlo_inference package)
 
-**Purpose**: Synchronized republishing of all sensor data with unified timestamps.
+**Purpose**: Runs real-time DLO inference from DIGIT images and pose streams.
 
-**Note**: User indicated this is no longer in use. The recording now uses throttled raw topics directly.
+**Key files**:
+- `dlo_inference/dlo_inference/dlo_inference_node.py` - Main inference node
+- `dlo_inference/dlo_inference/inference_utils.py` - Model I/O and geometry helpers
+
+**Topics subscribed**:
+| Topic | Type | Description |
+|-------|------|-------------|
+| `/digit/{SERIAL}/image_raw` | sensor_msgs/Image | Live DIGIT images used as model input |
+| `/digit/{SERIAL}/ref_image` | sensor_msgs/Image | Latched reference images when diff inputs are enabled |
+| `/end_effector_pose` | geometry_msgs/PoseStamped | Robot EE pose in `base_link` |
+| `/natnet/fixed_ee_pose` | geometry_msgs/PoseStamped | Fixed gripper pose in `base_link` |
+
+**Topics published**:
+| Topic | Type | Description |
+|-------|------|-------------|
+| `/dlo_inference/prediction_fixed` | my_msgs/PointsArray | Predicted DLO points in the fixed gripper frame |
+| `/dlo_inference/prediction_base` | my_msgs/PointsArray | Predicted DLO points transformed into `base_link` |
+| `/dlo_inference/prediction_fixed_marker` | visualization_msgs/Marker | RViz line strip for fixed-frame prediction |
+| `/dlo_inference/prediction_base_marker` | visualization_msgs/Marker | RViz line strip for base-frame prediction |
+
+**Note**: This node is optional and is launched from bringup only when `enable_dlo_inference:=true`.
 
 ---
 
@@ -125,6 +145,7 @@ Launches all sensor nodes:
 - `end_effector_pose_pub_node`
 - `natnet_client_pub_node`
 - `digit_pub_node`
+- `dlo_inference_node` (optional, gated by `enable_dlo_inference`)
 - `robotiq_rviz.launch.py` (gripper driver + RViz plugin)
 
 **Usage**: `ros2 launch data_collection_bringup data_collection_bringup.launch.py`
@@ -154,7 +175,7 @@ Records throttled topics to an MCAP bag file.
 Contains parameters for:
 - `digit_pub_node`: rate, resolution, fps, intensity
 - `natnet_client_pub_node`: server/client IPs, calibration, rigid body IDs
-- `full_data_pub`: (deprecated)
+- `dlo_inference_node`: model paths, timing, topic names, frame publication toggles
 
 ---
 
@@ -202,10 +223,17 @@ r2 / setupr2       # Source ROS2 workspace
 │             │     │             │     │    _pub     │
 └──────┬──────┘     └──────┬──────┘     └──────┬──────┘
        │                   │                   │
-       ▼                   ▼                   ▼
+       ├──────────────┬────┴──────────────┐    │
+       │              │                   │    │
+       ▼              ▼                   ▼    ▼
 ┌────────────────────────────────────────────────────┐
-│              topic_tools/throttle                   │
-│         (reduces all topics to 10 Hz)               │
+│             dlo_inference (optional)               │
+└────────────────────────────────────────────────────┘
+       │
+       ▼
+┌────────────────────────────────────────────────────┐
+│              topic_tools/throttle                  │
+│         (reduces recorded topics to 10 Hz)         │
 └────────────────────────┬───────────────────────────┘
                          │
                          ▼
@@ -221,7 +249,7 @@ r2 / setupr2       # Source ROS2 workspace
 1. **QoS Profiles**:
    - Live data: `BEST_EFFORT` / `VOLATILE`
    - Reference images: `RELIABLE` / `TRANSIENT_LOCAL` (latched)
-   - Published synced data: `RELIABLE` / `VOLATILE`
+   - Pose and inference outputs: `RELIABLE` / `VOLATILE`
 
 2. **Calibration**:
    - `t_calib` and `q_calib` define the transform from `base_link` to `natnet_world`

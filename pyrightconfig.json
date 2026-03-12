@@ -1,0 +1,10 @@
+{
+  "extraPaths": [
+    ".venv/lib/python3.12/site-packages",
+    "/opt/ros/jazzy/lib/python3.12/site-packages",
+    "install/my_msgs/lib/python3.12/site-packages",
+    "install/natnet_pub/lib/python3.12/site-packages",
+    "install/digit_pub/lib/python3.12/site-packages",
+    "src/my_code"
+  ]
+}

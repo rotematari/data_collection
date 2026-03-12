@@ -1,0 +1,17 @@
+dlo_inference_node:
+  ros__parameters:
+    dlopredict_root: "/home/rotem/dlopredict"
+    checkpoint_path: "/home/rotem/dlopredict/results/best_runs/09_02_20_05_np32_sinencTrue_attTrue_normTrue_norminpTrue_poseFalse_diffTrue_blankrefTrue_img320x240_bs32_lr0.001_wd0.0001_dp0.1_ep10/best.pt"
+    config_path: "/home/rotem/dlopredict/results/best_runs/09_02_20_05_np32_sinencTrue_attTrue_normTrue_norminpTrue_poseFalse_diffTrue_blankrefTrue_img320x240_bs32_lr0.001_wd0.0001_dp0.1_ep10/config.yaml"
+    norm_stats_path: "/home/rotem/dlopredict/src/simplepredict/configs/norm_stats.yaml"
+    blank_ref_root: "/home/rotem/data_collection/src/my_code/dlo_inference/digit_blank_closed_refs"
+    device: "auto"
+    publish_rate: 10.0
+    buffer_size: 8
+    max_sync_slop_sec: 0.08
+    fixed_prediction_frame_id: "fixed_ee"
+    digit_serials: ["D21118", "D21122", "D21123", "D21124"]
+    ee_pose_topic: "/end_effector_pose"
+    fixed_ee_pose_topic: "/natnet/fixed_ee_pose"
+    publish_base_frame: true
+    publish_fixed_frame: true

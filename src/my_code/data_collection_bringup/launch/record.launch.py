@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -6,7 +8,7 @@ import launch
 from launch.actions import TimerAction, Shutdown
 def launch_setup(context, *args, **kwargs):
     name_value = LaunchConfiguration("name").perform(context)
-    timestamp = time.strftime("%m_%d_%H_%M")
+    timestamp = time.strftime("%d_%m_%H_%M")
     directory = LaunchConfiguration("directory").perform(context)
     bag_name = f"{directory}{timestamp}_{name_value}"
     duration = LaunchConfiguration("duration").perform(context)

@@ -1,0 +1,87 @@
+
+============================================================
+MODEL SUMMARY
+============================================================
+Total parameters:       24,796,167
+Trainable parameters:    6,377,991 (25.7%)
+Frozen parameters:      18,418,176 (74.3%)
+Model size:                  94.59 MB
+Mean inference time:         64.39 ms (batch_size=32)
+------------------------------------------------------------
+Dataset sessions:
+  Train sessions:              36
+  Test sessions:                4
+------------------------------------------------------------
+Per-component breakdown:
+  img_enc                   22,018,692 params (3,600,516 trainable)
+  pose_enc                   2,633,728 params (2,633,728 trainable)
+  cross_attn                    66,048 params (66,048 trainable)
+  cross_attn_norm                  256 params (256 trainable)
+  self_attn                     66,048 params (66,048 trainable)
+  self_attn_norm                   256 params (256 trainable)
+  simple_decoder                10,627 params (10,627 trainable)
+============================================================
+
+epoch 001  train 0.6185  val 0.0442 ± 0.0173
+  Full-val stats: RMSE=0.0442±0.0173, Chamfer=0.035940±0.014305
+  Per-session validation (RMSE / Chamfer):
+    01_13_14_46_deg115: RMSE=0.0418±0.0163, Chamfer=0.033187±0.011928 (n=6740)
+    02_05_16_15_deg75_45: RMSE=0.0560±0.0184, Chamfer=0.045364±0.016221 (n=4461)
+    02_05_16_39_deg45_135: RMSE=0.0438±0.0160, Chamfer=0.036794±0.014585 (n=4481)
+    25_12_16_28: RMSE=0.0382±0.0140, Chamfer=0.031297±0.011286 (n=5881)
+epoch 002  train 0.2608  val 0.0371 ± 0.0174
+  Full-val stats: RMSE=0.0371±0.0174, Chamfer=0.030832±0.013998
+  Per-session validation (RMSE / Chamfer):
+    01_13_14_46_deg115: RMSE=0.0378±0.0161, Chamfer=0.031298±0.012338 (n=6740)
+    02_05_16_15_deg75_45: RMSE=0.0522±0.0207, Chamfer=0.043135±0.016593 (n=4461)
+    02_05_16_39_deg45_135: RMSE=0.0310±0.0103, Chamfer=0.025561±0.009372 (n=4481)
+    25_12_16_28: RMSE=0.0295±0.0120, Chamfer=0.024982±0.009890 (n=5881)
+epoch 003  train 0.1868  val 0.0361 ± 0.0183
+  Full-val stats: RMSE=0.0361±0.0183, Chamfer=0.030864±0.015191
+  Per-session validation (RMSE / Chamfer):
+    01_13_14_46_deg115: RMSE=0.0338±0.0157, Chamfer=0.029553±0.011700 (n=6740)
+    02_05_16_15_deg75_45: RMSE=0.0559±0.0204, Chamfer=0.047432±0.017061 (n=4461)
+    02_05_16_39_deg45_135: RMSE=0.0268±0.0097, Chamfer=0.022979±0.009279 (n=4481)
+    25_12_16_28: RMSE=0.0310±0.0127, Chamfer=0.025807±0.010942 (n=5881)
+epoch 004  train 0.1577  val 0.0340 ± 0.0178
+  Full-val stats: RMSE=0.0340±0.0178, Chamfer=0.029377±0.014455
+  Per-session validation (RMSE / Chamfer):
+    01_13_14_46_deg115: RMSE=0.0330±0.0156, Chamfer=0.028864±0.011755 (n=6740)
+    02_05_16_15_deg75_45: RMSE=0.0520±0.0212, Chamfer=0.044346±0.016960 (n=4461)
+    02_05_16_39_deg45_135: RMSE=0.0270±0.0110, Chamfer=0.023476±0.010078 (n=4481)
+    25_12_16_28: RMSE=0.0267±0.0106, Chamfer=0.023105±0.008721 (n=5881)
+epoch 005  train 0.1420  val 0.0341 ± 0.0194
+  Full-val stats: RMSE=0.0341±0.0194, Chamfer=0.029148±0.015532
+  Per-session validation (RMSE / Chamfer):
+    01_13_14_46_deg115: RMSE=0.0330±0.0177, Chamfer=0.028291±0.012974 (n=6740)
+    02_05_16_15_deg75_45: RMSE=0.0558±0.0215, Chamfer=0.047094±0.016985 (n=4461)
+    02_05_16_39_deg45_135: RMSE=0.0249±0.0080, Chamfer=0.021283±0.007618 (n=4481)
+    25_12_16_28: RMSE=0.0258±0.0116, Chamfer=0.022508±0.009601 (n=5881)
+epoch 006  train 0.1324  val 0.0330 ± 0.0189
+  Full-val stats: RMSE=0.0330±0.0189, Chamfer=0.028205±0.015076
+  Per-session validation (RMSE / Chamfer):
+    01_13_14_46_deg115: RMSE=0.0309±0.0158, Chamfer=0.026983±0.011087 (n=6740)
+    02_05_16_15_deg75_45: RMSE=0.0533±0.0231, Chamfer=0.044895±0.018193 (n=4461)
+    02_05_16_39_deg45_135: RMSE=0.0259±0.0109, Chamfer=0.021750±0.009871 (n=4481)
+    25_12_16_28: RMSE=0.0254±0.0110, Chamfer=0.021866±0.009066 (n=5881)
+epoch 007  train 0.1260  val 0.0328 ± 0.0187
+  Full-val stats: RMSE=0.0328±0.0187, Chamfer=0.028306±0.015194
+  Per-session validation (RMSE / Chamfer):
+    01_13_14_46_deg115: RMSE=0.0306±0.0153, Chamfer=0.026720±0.010881 (n=6740)
+    02_05_16_15_deg75_45: RMSE=0.0533±0.0218, Chamfer=0.045595±0.017888 (n=4461)
+    02_05_16_39_deg45_135: RMSE=0.0261±0.0108, Chamfer=0.021992±0.009323 (n=4481)
+    25_12_16_28: RMSE=0.0251±0.0122, Chamfer=0.021820±0.009989 (n=5881)
+epoch 008  train 0.1218  val 0.0328 ± 0.0191
+  Full-val stats: RMSE=0.0328±0.0191, Chamfer=0.028234±0.015474
+  Per-session validation (RMSE / Chamfer):
+    01_13_14_46_deg115: RMSE=0.0304±0.0154, Chamfer=0.026541±0.011157 (n=6740)
+    02_05_16_15_deg75_45: RMSE=0.0537±0.0228, Chamfer=0.045754±0.018394 (n=4461)
+    02_05_16_39_deg45_135: RMSE=0.0257±0.0105, Chamfer=0.021726±0.009147 (n=4481)
+    25_12_16_28: RMSE=0.0250±0.0124, Chamfer=0.021843±0.010280 (n=5881)
+epoch 009  train 0.1192  val 0.0326 ± 0.0192
+  Full-val stats: RMSE=0.0326±0.0192, Chamfer=0.027999±0.015544
+  Per-session validation (RMSE / Chamfer):
+    01_13_14_46_deg115: RMSE=0.0301±0.0153, Chamfer=0.026233±0.011191 (n=6740)
+    02_05_16_15_deg75_45: RMSE=0.0539±0.0233, Chamfer=0.045803±0.018690 (n=4461)
+    02_05_16_39_deg45_135: RMSE=0.0253±0.0104, Chamfer=0.021401±0.009129 (n=4481)
+    25_12_16_28: RMSE=0.0248±0.0120, Chamfer=0.021547±0.009750 (n=5881)

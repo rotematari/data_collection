@@ -41,15 +41,16 @@ class DigitPublisherNode(Node):
                     )
         self.diff_with_ref = self.get_parameter("diff_with_ref").get_parameter_value().bool_value
         
-        self.intesity = self.get_parameter("intensity").get_parameter_value().integer_value
+        self.intensity = self.get_parameter("intensity").get_parameter_value().integer_value
         
+        self.get_logger().info(f"DIGIT resolution: {self.resolution},\n fps: {self.fps},\n intensity: {self.intensity}")
         self.bridge = CvBridge()
         self.digit_array = DigitArray(
             show_log=True,
             ros_logger=self.get_logger(),
             resolution=self.resolution,
             fps=self.fps,
-            intensity=self.intesity
+            intensity=self.intensity
         )
         self.digit_publishers: List = []
 
@@ -79,7 +80,7 @@ class DigitPublisherNode(Node):
         # self.get_logger().info(f"DigitPublisherNode started. rate={self.rate}, diff_with_ref={self.diff_with_ref}")
         
         # log the parameters
-        self.get_logger().info(f"DIGIT resolution: {self.resolution},\n fps: {self.fps},\n intensity: {self.intesity}")
+        
         # -------- Command sub --------
         self.create_subscription(String, "digit_cmd", self.cmd_callback, 10)
         self.pub_ref_once()  # publish ref frames once at startup

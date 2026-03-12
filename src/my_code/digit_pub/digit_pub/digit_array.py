@@ -218,7 +218,7 @@ class DigitArray:
 
 if __name__ == "__main__":
     try:
-        digit_array = DigitArray(show_log=True ,resolution="QVGA", fps=30, intensity=15)
+        digit_array = DigitArray(show_log=True ,resolution="VGA", fps=15, intensity=15)
         print("\n\nStarting to show all DIGIT views. Press ESC to exit.\n\n")
         digit_array.show_all_views(diff_with_ref=False  )
     except Exception as e:

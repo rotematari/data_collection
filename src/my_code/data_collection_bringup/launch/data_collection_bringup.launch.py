@@ -4,10 +4,12 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
-from launch.actions import IncludeLaunchDescription, TimerAction
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 from launch.substitutions import (
+    LaunchConfiguration,
     PathJoinSubstitution,
 )
 from launch_ros.substitutions import FindPackageShare
@@ -22,9 +24,8 @@ def safe_load_yaml(package_name, file_name):
 def generate_launch_description():
     bringup_cfg = safe_load_yaml('data_collection_bringup', 'data_collection_bringup.yaml')
     print(f"Using Bringup config: {bringup_cfg}")
-    
-    
-    
+    enable_dlo_inference = LaunchConfiguration("enable_dlo_inference")
+
     kinova_node = Node(
         package='kinova_state_pub',
         executable='end_effector_pose_pub_node',
@@ -50,6 +51,15 @@ def generate_launch_description():
         name='digit_pub_node',
         output='screen',
         parameters=[bringup_cfg],
+    )
+
+    dlo_inference_node = Node(
+        package='dlo_inference',
+        executable='dlo_inference_node',
+        name='dlo_inference_node',
+        output='screen',
+        parameters=[bringup_cfg],
+        condition=IfCondition(enable_dlo_inference),
     )
     
     robotiq_launch = IncludeLaunchDescription(
@@ -79,9 +89,15 @@ def generate_launch_description():
     
     
     return LaunchDescription([
+        DeclareLaunchArgument(
+            "enable_dlo_inference",
+            default_value="false",
+            description="Launch the DLO real-time inference node.",
+        ),
         kinova_node,
         natnet_node,
         digit_node,
+        dlo_inference_node,
         robotiq_launch,
         # delay_rviz_node,
         # full_data_pub_node,

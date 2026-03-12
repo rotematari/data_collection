@@ -1,10 +1,10 @@
 
 digit_pub_node:
   ros__parameters:
-    rate: 120.0
+    rate: 30.0
     diff_with_ref: false
     resolution: "QVGA"
-    fps: "high"  #  30, 60 for QVGA, 15, 30 for VGA
+    fps: "low"  #  30, 60 for QVGA, 15, 30 for VGA
     intensity: 15
 
 natnet_client_pub_node:
@@ -12,7 +12,7 @@ natnet_client_pub_node:
     server_address: "132.66.210.173"
     client_address: "132.66.53.99"
     use_multicast: false
-    rate: 120.0
+    rate: 60.0
     base_frame: base_link
     end_effector_frame: end_effector_link
     calibrate: True
@@ -30,3 +30,21 @@ full_data_pub:
     num_markers: 14
     t_calib: [-0.037361, -0.581480, -0.032343]  # Calibration offset [0.220615, -0.545225, -0.026517]
     q_calib: [0.514472, 0.475635, 0.509970, 0.499020]  # Quaternion calibration offset 
+
+dlo_inference_node:
+  ros__parameters:
+    dlopredict_root: "/home/rotem/dlopredict"
+    checkpoint_path: "/home/rotem/dlopredict/results/best_runs/09_02_20_05_np32_sinencTrue_attTrue_normTrue_norminpTrue_poseFalse_diffTrue_blankrefTrue_img320x240_bs32_lr0.001_wd0.0001_dp0.1_ep10/best.pt"
+    config_path: "/home/rotem/dlopredict/results/best_runs/09_02_20_05_np32_sinencTrue_attTrue_normTrue_norminpTrue_poseFalse_diffTrue_blankrefTrue_img320x240_bs32_lr0.001_wd0.0001_dp0.1_ep10/config.yaml"
+    norm_stats_path: "/home/rotem/dlopredict/src/simplepredict/configs/norm_stats.yaml"
+    blank_ref_root: "/home/rotem/data_collection/src/my_code/dlo_inference/digit_blank_closed_refs"
+    device: "auto"
+    publish_rate: 10.0
+    buffer_size: 8
+    max_sync_slop_sec: 0.08
+    fixed_prediction_frame_id: "fixed_ee"
+    digit_serials: ["D21118", "D21122", "D21123", "D21124"]
+    ee_pose_topic: "/end_effector_pose"
+    fixed_ee_pose_topic: "/natnet/fixed_ee_pose"
+    publish_base_frame: true
+    publish_fixed_frame: true

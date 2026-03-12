@@ -31,7 +31,7 @@ check that all is started and 4 refs are published
 set up the wire in the fixed gripper by pressing setup botton in the robotiq panel on rviz (it will open and close slowly possition the wire rufly on the midlle)
 
 3. rqt 
-check the 4 images under full_data topic
+check the 4 DIGIT image topics under /digit
 
 set up 5 befor you run 4 and run it right after 
 
@@ -42,7 +42,7 @@ ros2 run
 ros2 run moveit_cpp_demo plan_to_goal
 
 
-5. run_bag <H_M_d_m> <duration_sec>
+5. ros2 launch data_collection_bringup record.launch.py name:=<suffix> duration:=<seconds>
 
  -->
 
@@ -115,7 +115,10 @@ rqt
 
 Verify:
 
-* Under the full_data topic, confirm all 4 Digit camera images appear correctly
+* Under the `/digit` namespace, confirm all 4 live DIGIT image topics appear correctly:
+  `/digit/D21118/image_raw`, `/digit/D21122/image_raw`,
+  `/digit/D21123/image_raw`, `/digit/D21124/image_raw`
+* Check that the matching reference images are also available on `/digit/*/ref_image`
 
 
 ## 8. Terminal 4 — MoveIt CPP Demo
@@ -131,12 +134,24 @@ ros2 launch moveit_cpp_demo plan_to_goal
 ## 9. Record a Bag File
 
 Command:
-run_bag <H_M_d_m> <duration_sec>
+`ros2 launch data_collection_bringup record.launch.py name:=<suffix> duration:=<seconds>`
 
 Where:
 
-* <H_M_d_m> = hour, minute, day, month
-* <duration_sec> = number of seconds to record
+* `name`: Descriptive suffix (file will be `<timestamp>_<suffix>`)
+* `duration`: Recording length in seconds (default: 600)
+* `rate_hz`: (Optional) Throttling frequency (default: 10)
+
+This launch file records throttled versions of the active publisher topics:
+
+* `/digit/D21118/image_raw_throttled`
+* `/digit/D21122/image_raw_throttled`
+* `/digit/D21123/image_raw_throttled`
+* `/digit/D21124/image_raw_throttled`
+* `/joint_states_throttled`
+* `/natnet/unlabeled_marker_data_throttled`
+* `/natnet/fixed_ee_pose_throttled`
+* `/end_effector_pose_throttled`
 
 ---
 
@@ -148,4 +163,4 @@ If you want, I can refine formatting, add troubleshooting notes, or generate a m
 ## 10. check the bag file existe under
 
 
-/home/rotem/data_collection/bag_data_collections
+`/home/rotem/data_collection/recordings`

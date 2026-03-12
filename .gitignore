@@ -6,3 +6,4 @@ log/
 __pycache__/
 *.pyc
 *.mcap
+src/my_code/dlo_inference/assets/checkpoits/**/*.pt
