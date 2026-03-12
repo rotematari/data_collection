@@ -1,0 +1,23 @@
+dlo_spline_node:
+  ros__parameters:
+    num_kp: 14
+    momentum_weight: 0.2
+    spline_k: 3
+    min_markers: 10
+    rate: 30.0
+
+njc_controller_node:
+  ros__parameters:
+    model_dir: ""            # REQUIRED — no default
+    checkpoint_name: "checkpoint_best.pth"
+    controller_type: "dls"   # dls | lyapunov | lyapunov_var
+    kp: 1.0
+    damping: 0.1
+    epsilon: 0.01
+    alpha: 1.0
+    device: "auto"
+    control_rate: 30.0
+    num_kp: 14
+    max_linear_vel: 0.5
+    max_angular_vel: 1.0
+    max_data_age_sec: 0.2
