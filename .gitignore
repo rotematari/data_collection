@@ -6,3 +6,6 @@ log/
 __pycache__/
 *.pyc
 *.mcap
+*.bag
+*.pt
+*.pth
