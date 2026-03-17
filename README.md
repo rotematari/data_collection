@@ -39,10 +39,36 @@ set up 5 befor you run 4 and run it right after
 cd ~/ws_moveit
 setupr2
 ros2 run 
-ros2 run moveit_cpp_demo plan_to_goal
+ros2 launch moveit_cpp_demo plan_to_gaol.launch.py --show-args
+Arguments (pass arguments as '<name>:=<value>'):
+
+    'setup_gripper':
+        Whether to setup the gripper.
+        (default: 'true')
+
+    'test_random_moves':
+        Whether to test random moves.
+        (default: 'false')
+
+    'go_to_ready':
+        Whether to go to ready position on start.
+        (default: 'true')
+
+ros2 launch moveit_cpp_demo plan_to_gaol.launch.py setup_gripper:=false test_random_moves:=true go_to_ready:=false
 
 
-5. run_bag <H_M_d_m> <duration_sec>
+
+5. ros2 launch data_collection_bringup record.launch.py name:=<H_M_d_m> duration:=<duration_sec>
+Arguments (pass arguments as '<name>:=<value>'):
+
+    'name':
+        Name of the rosbag to record to
+        (default: '')
+
+    'duration':
+        Duration to record the rosbag in seconds
+        (default: '600.0')
+    
 
  -->
 
@@ -105,7 +131,7 @@ Then in RViz:
 * Press the Setup button (the gripper will open/close slowly)
 * Place the wire roughly in the middle of the fixed gripper
 
-## 7. Terminal 3 — RQT Image Check
+## 7. Terminal 3 — RQT Topic Check
 
 Command:
 
@@ -115,7 +141,10 @@ rqt
 
 Verify:
 
-* Under the full_data topic, confirm all 4 Digit camera images appear correctly
+* Under `/digit/<serial>/image_raw`, confirm all 4 DIGIT camera images appear correctly
+* Under `/digit/<serial>/ref_image`, confirm all 4 reference images are available
+* Confirm `/natnet/fixed_ee_pose` and `/end_effector_pose` are updating
+* `full_data_pub` is currently not part of the standard bringup flow
 
 
 ## 8. Terminal 4 — MoveIt CPP Demo
@@ -131,12 +160,28 @@ ros2 launch moveit_cpp_demo plan_to_goal
 ## 9. Record a Bag File
 
 Command:
-run_bag <H_M_d_m> <duration_sec>
+
+`ros2 launch data_collection_bringup record.launch.py name:=<H_M_d_m> duration:=<duration_sec> [directory:=<output_dir>] [rate_hz:=<hz>]`
+
+Example:
+
+`ros2 launch data_collection_bringup record.launch.py name:=deg_0_0 duration:=300  rate_hz:=20.0`
+
+Arguments:
+
+* `name`: suffix for the bag name
+  Default: `""`
+* `duration`: recording duration in seconds
+  Default: `600.0`
+* `directory`: output directory for the bag
+  Default: `/home/rotem/data_collection/recordings/`
+* `rate_hz`: throttle rate applied before recording
+  Default: `10.0`
 
 Where:
 
-* <H_M_d_m> = hour, minute, day, month
-* <duration_sec> = number of seconds to record
+* `<angle_setup>` = how the wire is setup on the gripper
+* `<duration_sec>` = number of seconds to record
 
 ---
 
@@ -145,7 +190,9 @@ If you want, I can refine formatting, add troubleshooting notes, or generate a m
 
 
 
-## 10. check the bag file existe under
+## 10. Check the Recorded Bag Location
 
 
-/home/rotem/data_collection/bag_data_collections
+By default, `run_bag` writes the MCAP bag under:
+
+`/home/rotem/data_collection/recordings/`
